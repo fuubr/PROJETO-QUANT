@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+
+# Dados e resultados gerados localmente (nao sao codigo-fonte)
+data/cache/
+results/
+
+# Ambientes virtuais, caso venha a usar
+.venv/
+venv/
+env/
+
+# Editor/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
