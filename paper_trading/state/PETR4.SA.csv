@@ -1,0 +1,2 @@
+date,close,target_position,held_position,net_return,equity,entry_price,running_peak_equity,running_peak_price,circuit_breaker_triggered,circuit_breaker_date,circuit_breaker_reason,stop_loss_triggers
+2026-08-31,45.02000045776367,0.17381360092946752,0.0,0.0,100000.0,,100000.0,45.02000045776367,False,,,0
