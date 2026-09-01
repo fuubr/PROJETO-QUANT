@@ -1,0 +1,59 @@
+name: Paper Trading Diario (Etapa 6)
+
+# Roda sozinho todo dia, nos servidores do GitHub -- nao depende de nenhum
+# computador do usuario estar ligado ou logado. Isso resolve o problema de
+# continuidade que motivou essa configuracao: paper trading precisa rodar
+# TODO dia, sem buracos, para a comparacao backtest-vs-real (a metrica
+# principal da Etapa 6) fazer sentido.
+
+on:
+  schedule:
+    # 22:00 UTC = 19:00 horario de Brasilia (sem horario de verao desde
+    # 2019) -- depois do fechamento tanto da NYSE (16h ET) quanto da B3
+    # (18h Brasilia), garantindo que o preco de fechamento do dia ja esta
+    # disponivel para os 4 ativos (SPY, AAPL, PETR4.SA, VALE3.SA).
+    # So dias uteis (seg-sex); feriados nao sao tratados explicitamente --
+    # o script detecta "sem dado novo" e nao faz nada nesse caso, nao e
+    # um erro.
+    - cron: "0 22 * * 1-5"
+  workflow_dispatch: {}  # permite rodar manualmente pela interface do
+    # GitHub (aba "Actions" -> "Run workflow"), util para testar sem
+    # esperar o horario agendado.
+
+permissions:
+  contents: write  # necessario para o workflow commitar as atualizacoes
+    # diarias de estado (paper_trading/state/*.csv) de volta no repositorio.
+
+jobs:
+  paper-trading:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout do repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Rodar um dia de paper trading
+        run: python run_stage6_paper_trading_daily.py
+
+      - name: Commitar o estado atualizado
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add paper_trading/state/ paper_trading/models/
+          if ! git diff --cached --quiet; then
+            git commit -m "Paper trading: atualizacao diaria automatica ($(date -u +%Y-%m-%d))"
+            git push
+          else
+            echo "Nada novo para commitar hoje (provavelmente sem dado de mercado novo)."
+          fi
