@@ -53,6 +53,7 @@ jobs:
           git add paper_trading/state/ paper_trading/models/
           if ! git diff --cached --quiet; then
             git commit -m "Paper trading: atualizacao diaria automatica ($(date -u +%Y-%m-%d))"
+            git pull --rebase origin main
             git push
           else
             echo "Nada novo para commitar hoje (provavelmente sem dado de mercado novo)."
