@@ -263,3 +263,12 @@ RETRAIN_EVAL_FRACTION = 0.5
 # sempre e esconderiam qualquer bug novo de verdade. Dados historicos nao sao
 # apagados nem reescritos; apenas deixam de ser usados como referencia.
 PAPER_TRADING_BUGGY_THROUGH = "2026-09-30"
+
+# --- Analise de baselines justos e ablacao (run_baseline_ablation.py) ---
+# Volatilidade-alvo (anual) do baseline "vol-target": exposicao = alvo / vol
+# realizada de 20 dias, limitada a [0, 1]. Fixada antes de ver resultados.
+VOL_TARGET_ANNUAL = 0.10
+# Taxa anual ASSUMIDA para o caixa (parte nao investida), apenas para a
+# coluna "com juros no caixa" -- valores medios de longo prazo aproximados,
+# NAO dados de mercado; a coluna principal continua com caixa a 0%.
+CASH_ANNUAL_RATE_ASSUMED = {"US": 0.025, "BR": 0.10}
