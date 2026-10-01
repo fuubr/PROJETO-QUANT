@@ -1,0 +1,40 @@
+name: Relatorio de Drift Semanal (Etapa 7)
+
+# Cadencia FIXA e semanal de proposito: checar "o modelo derivou?" todo dia
+# e, em si, um teste repetido (armadilha de multiplas comparacoes ja
+# corrigida varias vezes neste projeto). Este workflow SO gera relatorio --
+# nunca retreina nem promove modelo. Promocao e sempre manual e explicita
+# (python run_stage7_drift_check.py --promote TICKER).
+
+on:
+  schedule:
+    - cron: "0 23 * * 1"   # segundas, 20h de Brasilia -- depois do paper trading diario
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  drift-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Gerar relatorio de drift (inclui comparacao challenger, sem promover)
+        run: python run_stage7_drift_check.py --retrain-eval
+      - name: Commitar o relatorio
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add paper_trading/drift_report.md
+          if ! git diff --cached --quiet; then
+            git commit -m "Relatorio de drift semanal ($(date -u +%Y-%m-%d))"
+            git pull --rebase origin main
+            git push
+          fi

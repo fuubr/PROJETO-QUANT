@@ -61,7 +61,7 @@ from data.real import load_all
 from models.calibration import train_models
 from models.dataset import build_dataset, feature_columns
 from models.features import build_features
-from paper_trading.model_store import load_frozen_model, save_frozen_model
+from paper_trading.model_store import list_versions, model_for_date, save_frozen_model
 from paper_trading.state import append_row, load_log, state_from_last_row
 from risk.kelly import kelly_position_series
 from risk.managed_backtest import RiskState, step_risk_managed_backtest
@@ -122,11 +122,11 @@ def run_one_day_for_ticker(ticker: str, close: pd.Series) -> None:
     fee_bps, slippage_bps = _asset_costs(ticker)
     circuit_breaker_pct, asset_circuit_breaker_pct = _circuit_breaker_thresholds(ticker)
 
-    frozen = load_frozen_model(ticker)
+    versions = list_versions(ticker)
     today_date = close.index[-1]
     today_close = float(close.iloc[-1])
 
-    if frozen is None:
+    if not versions:
         print(f"  Primeira execucao para {ticker}. Congelando modelo com dados ate {today_date.date()}.")
 
         full_dataset = build_dataset(
@@ -148,7 +148,9 @@ def run_one_day_for_ticker(ticker: str, close: pd.Series) -> None:
         print(f"  Dia 1 registrado. Posicao alvo para amanha: {target_position:.4f}")
         return
 
-    trained, frozen_date = frozen
+    active = model_for_date(versions, today_date)
+    trained = active.trained
+    frozen_date = f"{versions[0].effective_from.date()} (versao ativa: v{active.version})"
     log = load_log(ticker)
 
     if today_date in log.index:

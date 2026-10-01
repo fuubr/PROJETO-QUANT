@@ -230,3 +230,36 @@ PAPER_TRADING_INITIAL_CAPITAL = INITIAL_CAPITAL
 # de dados (yfinance fora do ar, ticker delistado, etc.), nao so um
 # feriado.
 STALENESS_WARNING_DAYS = 5
+
+# --- Etapa 7: deteccao de drift e retreino ---
+#
+# Todos os limiares abaixo foram fixados ANTES de olhar qualquer resultado
+# de drift real -- ajusta-los depois de ver um alerta (ou a falta dele)
+# seria a mesma armadilha de p-hacking rejeitada desde a Etapa 0.
+
+# Drift de features: p-valor empirico (contra a distribuicao de janelas
+# moveis do periodo de referencia, que preserva a autocorrelacao) abaixo
+# disso gera "ATENCAO" -- nunca "drift confirmado" sozinho.
+FEATURE_DRIFT_ALERT_P = 0.05
+# Menos dias ao vivo que isso: nao ha o que comparar, o veredito e INSUFICIENTE.
+DRIFT_MIN_LIVE_DAYS_FEATURES = 10
+# Amostras EFETIVAS (dias maduros / horizonte, ja que rotulos de 20 dias se
+# sobrepoem) minimas para qualquer veredito de desempenho. 6 ~ 120 dias
+# uteis ~ 6 meses. Abaixo disso o veredito e INSUFICIENTE, por construcao.
+DRIFT_MIN_EFFECTIVE_SAMPLES = 6
+DRIFT_BOOTSTRAP_RESAMPLES = 2000
+DRIFT_CI_ALPHA = 0.05  # IC bilateral de 95%
+DRIFT_BOOTSTRAP_SEED = 42
+
+# Retreino: o periodo ao vivo ja "maduro" (com rotulo de 20 dias resolvido)
+# depois do fim do treino do modelo vigente e dividido em duas partes -- a
+# primeira alimenta o treino do challenger (dado novo que o modelo vigente
+# nao viu), a segunda e a janela de avaliacao, fora da amostra para os DOIS.
+RETRAIN_EVAL_FRACTION = 0.5
+
+# Ultima data de log gerada pelo codigo COM o bug do dia atrasado (corrigido
+# em 2026-10-01). A checagem de consistencia so compara a partir da primeira
+# linha posterior a esta -- sem isso, os dias antigos acusariam DIVERGE para
+# sempre e esconderiam qualquer bug novo de verdade. Dados historicos nao sao
+# apagados nem reescritos; apenas deixam de ser usados como referencia.
+PAPER_TRADING_BUGGY_THROUGH = "2026-09-30"

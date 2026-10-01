@@ -27,14 +27,14 @@ def isolated_dirs(tmp_path, monkeypatch):
 
 
 def test_first_run_freezes_model_and_writes_day_one(isolated_dirs):
-    from paper_trading.model_store import load_frozen_model
+    from paper_trading.model_store import list_versions
     from paper_trading.state import load_log
     from run_stage6_paper_trading_daily import run_one_day_for_ticker
 
     close = _make_fake_close(1400, seed=1)
     run_one_day_for_ticker("TESTX", close)
 
-    assert load_frozen_model("TESTX") is not None
+    assert len(list_versions("TESTX")) == 1
     log = load_log("TESTX")
     assert len(log) == 1
     assert log.iloc[0]["held_position"] == 0.0
