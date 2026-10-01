@@ -890,6 +890,45 @@ precisar copiar CSV nenhum.
 
 146/146 testes passam.
 
+## Etapa 7 - Deteccao de drift e retreino
+
+Tres perguntas separadas, porque tem causas e remedios diferentes:
+1. **Divergencia de implementacao** (`consistency_check.py`): live bate com o motor em lote
+   usando o mesmo modelo? Divergencia = BUG, nao drift.
+2. **Drift de features** (`paper_trading/drift.py`): as entradas de hoje parecem diferentes
+   do treino? Teste contra uma distribuicao nula EMPIRICA (janelas moveis do periodo de
+   referencia, que preserva a autocorrelacao -- o p-valor ingenuo alarmaria muito mais que
+   5%; coberto por teste de taxa de falso alarme). Reporta no maximo "ATENCAO".
+3. **Drift de desempenho**: Brier versus um previsor ingenuo (taxa-base) em resultados
+   MADUROS, IC por bootstrap de blocos. Veredito so com >= `DRIFT_MIN_EFFECTIVE_SAMPLES`
+   amostras efetivas (dias maduros / 20, ja que rotulos de 20 dias se sobrepoem; 6 ~ 6
+   meses). Antes disso o veredito e **INSUFICIENTE, por construcao** -- nao e defeito.
+   Com menos de 2 blocos independentes o IC e "indisponivel" (achado real: antes colapsava
+   num ponto e parecia preciso).
+
+Limiares fixados em `config.py` ANTES de ver qualquer resultado de drift.
+
+**Retreino** (`paper_trading/retrain.py`) nunca e automatico e nunca sobrescreve nada:
+- *Challenger*: treinado so com precos ate um corte; avaliado contra o modelo vigente na MESMA
+  janela posterior, fora da amostra para os dois (sem vazamento, testado).
+- *Promocao*: passo manual (`--promote TICKER`) que registra uma NOVA versao
+  (`paper_trading/models/registry.csv`) valida a partir do dia seguinte -- o historico nunca e
+  re-atribuido a outro modelo (tentar retroagir e recusado). Exige veredito
+  CHALLENGER_MELHOR (IC acima de zero); `--force-promote` existe mas e explicito e fica
+  marcado no relatorio. Provar que retreinar ajudou leva meses de dado -- propriedade do
+  problema, nao algo a "afrouxar".
+- O script diario e a checagem de consistencia agora usam a versao vigente em cada data.
+
+```
+python run_stage7_drift_check.py                  # relatorio (paper_trading/drift_report.md)
+python run_stage7_drift_check.py --retrain-eval   # + comparacao challenger
+python run_stage7_drift_check.py --promote SPY    # promove (so com evidencia)
+```
+Workflow semanal (`drift_check_weekly.yml`, segundas): so relatorio. Cadencia fixa de proposito:
+checar drift todo dia e um teste repetido (multiplas comparacoes).
+
+162/162 testes passam.
+
 ## Próximos passos
 
 A próxima etapa e a **Etapa 7 - Deteccao de drift e retreino periodico**,

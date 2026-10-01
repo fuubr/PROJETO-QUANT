@@ -16,6 +16,7 @@ from pathlib import Path
 import pandas as pd
 
 from config import (
+    PAPER_TRADING_BUGGY_THROUGH,
     PAPER_TRADING_TICKERS,
     STALENESS_WARNING_DAYS,
     STOP_LOSS_PCT,
@@ -24,7 +25,7 @@ from config import (
 from data.real import load_all
 from paper_trading.consistency_check import check_consistency
 from paper_trading.dashboard import generate_dashboard
-from paper_trading.model_store import load_frozen_model
+from paper_trading.model_store import list_versions
 from paper_trading.report import format_summary_line, summarize_ticker_log
 from paper_trading.state import load_log
 from run_stage6_paper_trading_daily import _asset_costs, _circuit_breaker_thresholds
@@ -51,10 +52,9 @@ def main() -> None:
         summaries.append(summary)
         logs[ticker] = log
 
-        frozen = load_frozen_model(ticker)
-        if frozen is None:
+        versions = list_versions(ticker)
+        if not versions:
             continue
-        trained, _ = frozen
 
         if real_data is None:
             real_data = load_all(PAPER_TRADING_TICKERS, str(log.index.min().date()), None)
@@ -65,12 +65,13 @@ def main() -> None:
         circuit_breaker_pct, asset_circuit_breaker_pct = _circuit_breaker_thresholds(ticker)
 
         result = check_consistency(
-            ticker, real_data[ticker]["close"], trained, log, fee_bps=fee_bps, slippage_bps=slippage_bps,
+            ticker, real_data[ticker]["close"], versions, log, fee_bps=fee_bps, slippage_bps=slippage_bps,
             circuit_breaker_pct=circuit_breaker_pct, asset_circuit_breaker_pct=asset_circuit_breaker_pct,
             stop_loss_pct=STOP_LOSS_PCT, var_confidence_level=VAR_CONFIDENCE_LEVEL,
+            clean_after=pd.Timestamp(PAPER_TRADING_BUGGY_THROUGH),
         )
         consistency_results[ticker] = result
-        status = "OK" if result.matches else "*** DIVERGE ***"
+        status = "aguardando dias pos-correcao" if result.days_compared == 0 else ("OK" if result.matches else "*** DIVERGE ***")
         print(f"  Consistencia backtest-vs-real [{ticker}]: {status} "
               f"(diferenca relativa maxima: {result.max_relative_equity_diff:.6%})")
 

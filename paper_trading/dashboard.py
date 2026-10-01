@@ -63,7 +63,9 @@ def generate_dashboard(
     for summary in summaries:
         badge = _status_badge(summary)
         consistency = consistency_results.get(summary.ticker)
-        if consistency is not None:
+        if consistency is not None and consistency.days_compared == 0:
+            consistency_html = '<span style="color:#6b7280;">aguardando dias pos-correcao</span>'
+        elif consistency is not None:
             consistency_html = (
                 '<span style="color:#166534;">bate com o backtest</span>' if consistency.matches
                 else f'<span style="color:#991b1b;">DIVERGE do backtest '
