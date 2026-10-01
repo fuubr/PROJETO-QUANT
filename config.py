@@ -268,7 +268,8 @@ PAPER_TRADING_BUGGY_THROUGH = "2026-09-30"
 # Volatilidade-alvo (anual) do baseline "vol-target": exposicao = alvo / vol
 # realizada de 20 dias, limitada a [0, 1]. Fixada antes de ver resultados.
 VOL_TARGET_ANNUAL = 0.10
-# Taxa anual ASSUMIDA para o caixa (parte nao investida), apenas para a
-# coluna "com juros no caixa" -- valores medios de longo prazo aproximados,
-# NAO dados de mercado; a coluna principal continua com caixa a 0%.
+# Taxa anual ASSUMIDA para o caixa -- agora SO FALLBACK, usada apenas se a
+# fonte oficial (BCB CDI / FRED T-bill, ver data/rates.py) estiver fora do ar,
+# e sempre rotulada como ASSUMIDA no relatorio. Valores medios aproximados,
+# NAO dados de mercado.
 CASH_ANNUAL_RATE_ASSUMED = {"US": 0.025, "BR": 0.10}

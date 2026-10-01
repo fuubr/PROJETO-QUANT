@@ -31,10 +31,11 @@ import pandas as pd
 from backtest.baselines import buy_and_hold_signal
 from backtest.statistics import mean_return_significance
 from config import (
-    BACKTEST_START_DATE, CASH_ANNUAL_RATE_ASSUMED, INITIAL_CAPITAL, KELLY_FRACTION, KELLY_MIN_LOSS_OBSERVATIONS,
+    BACKTEST_START_DATE, INITIAL_CAPITAL, KELLY_FRACTION, KELLY_MIN_LOSS_OBSERVATIONS,
     KELLY_MIN_WIN_OBSERVATIONS, KELLY_WIN_LOSS_ESTIMATION_WINDOW_DAYS, PREDICTION_HORIZON_DAYS, STAGE3_TICKERS,
     STOP_LOSS_PCT, VAR_CONFIDENCE_LEVEL, VOL_TARGET_ANNUAL,
 )
+from data.rates import risk_free_daily
 from data.real import load_all
 from models.comparison import comparison_window
 from models.labels import build_forward_return_label
@@ -70,23 +71,31 @@ def _kelly_signal(close, probs, window):
     return signal
 
 
-def _metrics(result, ticker: str) -> dict:
+def _metrics(result, rf: pd.Series) -> dict:
+    """rf = per-day risk-free (cash) rate aligned to the backtest index. The
+    uninvested share of capital earns it, and Sharpe is computed on the
+    excess over it -- the proper definition, which also fixes the distortion
+    of comparing low-exposure strategies at a 0% cash rate.
+    """
+
     r = result.net_returns.iloc[1:]
     held = result.actual_position.iloc[1:]
-    cash_daily = (1 + CASH_ANNUAL_RATE_ASSUMED["BR" if ticker.endswith(".SA") else "US"]) ** (1 / TRADING_DAYS_PER_YEAR) - 1
-    rc = r + (1 - held) * cash_daily
-    sharpe = lambda x: float(x.mean() / x.std(ddof=1) * np.sqrt(TRADING_DAYS_PER_YEAR)) if x.std(ddof=1) > 0 else 0.0
+    rf_s = rf.reindex(r.index).fillna(0.0)
+    total = r + (1 - held) * rf_s  # return including interest on the cash share
+    excess = total - rf_s
+    sharpe_excess = float(excess.mean() / excess.std(ddof=1) * np.sqrt(TRADING_DAYS_PER_YEAR)) if excess.std(ddof=1) > 0 else 0.0
     return {
         "retorno": round(result.total_return, 4), "sharpe": round(result.annualized_sharpe, 3),
         "sortino": round(result.sortino_ratio, 3), "max_dd": round(result.max_drawdown, 4),
         "exposicao_media": round(float(held.mean()), 3), "dias_ativo_%": round(100 * result.active_trading_days / result.total_days, 1),
-        "retorno_c/_juros_caixa": round(float((1 + rc).prod() - 1), 4), "sharpe_c/_juros_caixa": round(sharpe(rc), 3),
+        "retorno_c/_caixa": round(float((1 + total).prod() - 1), 4), "sharpe_excesso_rf": round(sharpe_excess, 3),
     }
 
 
-def analyze(name, close, fee, slip, cb_pct, acb_pct, respect_holdout):
+def analyze(name, close, fee, slip, cb_pct, acb_pct, respect_holdout, risk_free=None):
     predictions = _get_oos_predictions(close, respect_holdout=respect_holdout)
     window = comparison_window(close, predictions)
+    rf, rf_source = risk_free if risk_free is not None else risk_free_daily(name, window.index)
     common = dict(fee_bps=fee, slippage_bps=slip, initial_capital=INITIAL_CAPITAL, var_confidence_level=VAR_CONFIDENCE_LEVEL)
     on = dict(stop_loss_pct=STOP_LOSS_PCT, circuit_breaker_drawdown_pct=cb_pct, asset_circuit_breaker_drawdown_pct=acb_pct)
     off = dict(stop_loss_pct=OFF, circuit_breaker_drawdown_pct=OFF)
@@ -107,29 +116,30 @@ def analyze(name, close, fee, slip, cb_pct, acb_pct, respect_holdout):
         "exposicao_igualada (s/ stops)": matched, "vol_target (s/ stops)": vol_target,
         "buy_and_hold_puro (s/ stops)": bh_pure, "buy_and_hold (c/ breaker)": bh_overlay,
     }
-    table = pd.DataFrame({k: _metrics(v, name) for k, v in runs.items()}).T
+    table = pd.DataFrame({k: _metrics(v, rf) for k, v in runs.items()}).T
 
     tests = {}
     for label, other in (("modelo - ablacao", ablation), ("modelo - exposicao_igualada", matched)):
         diff = kelly.net_returns.iloc[1:] - other.net_returns.iloc[1:]
         sig = mean_return_significance(diff, num_tests=2)
         tests[label] = (float(diff.mean() * TRADING_DAYS_PER_YEAR), sig["t_stat"], sig["p_value"], sig["significant"])
-    return table, tests, (window.index[0].date(), window.index[-1].date(), len(window))
+    return table, tests, (window.index[0].date(), window.index[-1].date(), len(window)), rf_source
 
 
 def main() -> None:
     real = load_all(STAGE3_TICKERS, BACKTEST_START_DATE, None)
     md = ["# Analise de baselines justos e ablacao", "",
           "Fora da amostra (walk-forward purgado), periodo de desenvolvimento; holdout intocado. "
-          "Gerado por `run_baseline_ablation.py`. Caixa a 0% nas colunas principais; as colunas "
-          "`c/ juros caixa` usam taxas ASSUMIDAS (config), nao dados de mercado.", ""]
+          "Gerado por `run_baseline_ablation.py`. `retorno`/`sharpe` tratam o caixa a 0%; "
+          "`retorno_c/_caixa` e `sharpe_excesso_rf` usam a taxa livre de risco REAL (BCB CDI para "
+          ".SA, FRED T-bill 3m para os demais; a fonte aparece em cada secao).", ""]
     for ticker, frame in real.items():
         fee, slip = _asset_costs(ticker)
-        table, tests, (start, end, n) = analyze(
+        table, tests, (start, end, n), rf_source = analyze(
             ticker, frame["close"], fee, slip, _circuit_breaker_threshold(ticker),
             _asset_level_circuit_breaker_threshold(ticker), respect_holdout=True)
-        print(f"\n=== {ticker} ({start} a {end}, {n} dias) ===\n{table.to_string()}")
-        md += [f"## {ticker} ({start} a {end}, {n} dias)", "", table.to_markdown(), "",
+        print(f"\n=== {ticker} ({start} a {end}, {n} dias; caixa: {rf_source}) ===\n{table.to_string()}")
+        md += [f"## {ticker} ({start} a {end}, {n} dias)", "", f"Taxa livre de risco / caixa: **{rf_source}**", "", table.to_markdown(), "",
                "Teste de diferenca (Newey-West, Bonferroni x2): retorno anualizado da diferenca, t, p", ""]
         for label, (ann, t, p, sig) in tests.items():
             line = f"- {label}: {ann:+.2%} a.a., t={t:.2f}, p={p:.3f}, significativo={sig}"
