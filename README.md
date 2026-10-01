@@ -10,7 +10,7 @@ baselines justos, holdout intocado).
 pip install -r requirements.txt
 python -m pytest                              # suite completa
 python run_stage4_risk_management.py          # Kelly + stops, 4 ativos reais
-python run_baseline_ablation.py               # baselines justos + ablacao -> docs/analise_baselines.md
+python run_baseline_ablation.py               # baselines justos + ablacao (CDI/T-bill reais) -> docs/analise_baselines.md
 python run_stage6_paper_trading_daily.py      # 1 dia de paper trading (roda sozinho via GitHub Actions)
 python run_stage6_report.py                   # resumo + dashboard.html
 python run_stage7_drift_check.py              # relatorio de drift (semanal, automatico)

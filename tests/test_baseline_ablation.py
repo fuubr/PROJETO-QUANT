@@ -33,9 +33,13 @@ def test_causal_base_rate_only_uses_labels_matured_by_t():
 
 
 def test_analyze_returns_all_strategies_and_tests():
-    table, tests, (start, end, n) = analyze("FAKE", _close(1500, 3), 5.0, 2.0, 0.20, None, respect_holdout=False)
+    close = _close(1500, 3)
+    rf = pd.Series(0.0002, index=close.index)  # injected: tests must never touch the network
+    table, tests, (start, end, n), source = analyze(
+        "FAKE", close, 5.0, 2.0, 0.20, None, respect_holdout=False, risk_free=(rf, "teste"))
+    assert source == "teste"
     assert len(table) == 6 and n > 100
-    assert {"retorno", "sharpe", "max_dd", "exposicao_media", "retorno_c/_juros_caixa"} <= set(table.columns)
+    assert {"retorno", "sharpe", "max_dd", "exposicao_media", "retorno_c/_caixa", "sharpe_excesso_rf"} <= set(table.columns)
     assert set(tests) == {"modelo - ablacao", "modelo - exposicao_igualada"}
     # the matched-exposure baseline is built to have the same average exposure as the model strategy
     assert table.loc["exposicao_igualada (s/ stops)", "exposicao_media"] == pytest.approx(

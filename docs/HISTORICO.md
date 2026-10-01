@@ -957,3 +957,16 @@ comparar.
 - README dividido: `README.md` (como rodar) + este arquivo (historico). `docs/CRITERIOS.md`:
   criterios de sucesso/parada pre-registrados.
 - 175 testes.
+
+## Taxas livres de risco reais (BCB + FRED)
+
+- `data/rates.py`: CDI (BCB SGS 12, sem chave, em janelas de 5 anos por causa do limite de 10 do
+  BCB) e T-bill 3m (FRED DTB3, CSV publico, sem chave). Validacao de sanidade (um percentual nao
+  convertido viraria retorno de caixa absurdo), cache em disco, alinhamento com feriados por
+  forward-fill e fallback para as taxas ASSUMIDAS **sempre rotulado como tal** no relatorio.
+- `run_baseline_ablation.py` passou a render juros reais no caixa e a usar Sharpe sobre o
+  excedente ao caixa. As taxas assumidas (10% BR / 2,5% US) superestimavam o caixa na janela
+  (real: ~7,4% / ~1,8% a.a.) e geravam Sharpe de 7 a 25 na PETR4 (artefato).
+- Achado novo: em PETR4 e VALE3 a estrategia rendeu menos que o CDI puro (+40,9% / +45,8% contra
+  +50,7%).
+- Testes sem rede para o modulo (8) e injecao da taxa na analise. Total: 183 testes.
