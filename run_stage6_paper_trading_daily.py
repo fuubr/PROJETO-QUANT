@@ -53,12 +53,14 @@ from config import (
     PREDICTION_HORIZON_DAYS,
     SEED,
     SLIPPAGE_BPS,
+    STALENESS_WARNING_DAYS,
     STOP_LOSS_PCT,
     TRANSACTION_FEE_BPS,
 )
 from data.real import load_all
 from models.calibration import train_models
 from models.dataset import build_dataset, feature_columns
+from models.features import build_features
 from paper_trading.model_store import load_frozen_model, save_frozen_model
 from paper_trading.state import append_row, load_log, state_from_last_row
 from risk.kelly import kelly_position_series
@@ -80,18 +82,28 @@ def _today_target_position(close: pd.Series, trained) -> float:
     close, using the frozen model. Reuses kelly_position_series with a
     single-date probability series -- same causal logic as every other
     stage, just evaluated at one point instead of a whole history.
+
+    Uses build_features directly (NOT build_dataset). Real bug found via
+    the Stage 6 consistency check (paper_trading/consistency_check.py):
+    build_dataset always requires a label, and build_forward_return_label
+    sets the label to NaN for the last horizon_days rows since their
+    future price doesn't exist yet -- build_dataset's dropna then silently
+    drops those rows, INCLUDING today's, even with horizon_days=1 (today's
+    row still needs at least 1 day of future price it doesn't have yet).
+    The original code took dataset_features.index[-1] believing it was
+    today, but it was actually YESTERDAY -- every daily target position
+    was computed one full day stale from the day this script launched
+    until this fix. build_features has no label and therefore no such
+    drop: its last row is genuinely today, confirmed by test.
     """
 
-    dataset_features = build_dataset(
+    features = build_features(
         close, momentum_windows=FEATURE_MOMENTUM_WINDOWS, volatility_window=FEATURE_VOLATILITY_WINDOW,
-        sma_distance_window=FEATURE_SMA_DISTANCE_WINDOW, horizon_days=1,
-        # horizon_days=1 here only to keep build_dataset's dropna from
-        # discarding today's row for lacking a FUTURE label -- we never use
-        # the label itself, only the feature columns below.
-    )
-    feature_cols = feature_columns(dataset_features)
-    today_date = dataset_features.index[-1]
-    today_features = dataset_features.loc[[today_date], feature_cols]
+        sma_distance_window=FEATURE_SMA_DISTANCE_WINDOW,
+    ).dropna()
+    feature_cols = list(features.columns)
+    today_date = features.index[-1]
+    today_features = features.loc[[today_date], feature_cols]
 
     probability = float(trained.xgboost_calibrated.predict_proba(today_features)[:, 1][0])
     probability_series = pd.Series([probability], index=[today_date])
@@ -147,7 +159,16 @@ def run_one_day_for_ticker(ticker: str, close: pd.Series) -> None:
     last_date = log.index[-1]
 
     if today_date <= last_date:
-        print(f"  Nenhum dado novo desde {last_date.date()} -- nada a fazer.")
+        gap_days = (pd.Timestamp.now().normalize() - last_date.normalize()).days
+        if gap_days > STALENESS_WARNING_DAYS:
+            print(
+                f"  *** AVISO: sem dado novo ha {gap_days} dias corridos (ultimo: "
+                f"{last_date.date()}) -- isso passa do que um fim de semana ou feriado "
+                f"isolado explicaria. Verificar se o feed de dados (yfinance) esta "
+                f"funcionando para {ticker}. ***"
+            )
+        else:
+            print(f"  Nenhum dado novo desde {last_date.date()} -- nada a fazer.")
         return
 
     new_state, net_return = step_risk_managed_backtest(

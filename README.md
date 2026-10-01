@@ -813,12 +813,26 @@ parecer bem real").
 
 Rodar manualmente: `python run_stage6_paper_trading_daily.py`
 
-Agendar para rodar sozinho todo dia (Windows Task Scheduler):
-```powershell
-.\schedule_paper_trading.ps1
-```
-Roda as 19h (depois do fechamento de NYSE e B3), uma vez configurado o
-Windows executa sozinho -- nao precisa mais rodar manualmente.
+**Execucao automatica -- duas opcoes:**
+
+1. **GitHub Actions (recomendado)**: `.github/workflows/paper_trading_daily.yml`
+   roda o script sozinho, todo dia util as 19h (horario de Brasilia), nos
+   servidores do GitHub -- nao depende de nenhum computador do usuario
+   estar ligado ou logado. O workflow commita as atualizacoes de estado
+   (`paper_trading/state/*.csv`, `paper_trading/models/*.joblib`) de volta
+   no repositorio automaticamente. Configurado apos um problema real
+   identificado: rodar isso num computador com acesso incerto (ex: maquina
+   de laboratorio) arrisca buracos na sequencia diaria, o que invalida a
+   comparacao backtest-vs-real (a metrica principal desta etapa).
+2. **Windows Task Scheduler** (`schedule_paper_trading.ps1`): alternativa
+   local, so funciona enquanto aquele computador especifico estiver ligado
+   e logado todo dia -- mantida no projeto como opcao, mas o GitHub
+   Actions e a forma primaria agora.
+
+Ambas as opcoes escrevem no MESMO formato de estado (`paper_trading/state/`)
+-- nao rode as duas ao mesmo tempo para o mesmo ativo, ou o log pode
+receber duas linhas para o mesmo dia (o script e idempotente por *processo*,
+nao protegido contra duas maquinas diferentes rodando no mesmo horario).
 
 **Metrica principal desta etapa** (ainda nao automatizada): comparar o
 retorno realizado no log do paper trading contra o que um backtest
@@ -828,6 +842,53 @@ indicar bug no backtest que passou despercebido, nao "o mercado mudou".
 So faz sentido comparar depois de dias/semanas de dados acumulados.
 
 138/138 testes passam.
+
+## Melhorias do paper trading: resumo automatico, dado parado, consistencia, dashboard
+
+Depois de conferir manualmente os primeiros ~8 dias reais de paper
+trading (matematicamente corretos), quatro melhorias foram adicionadas:
+
+**Achado critico durante a construcao da checagem de consistencia**: o
+teste que compara o motor em lote contra o script diario (que deveriam
+ser matematicamente identicos, ja que os dois chamam a mesma
+`step_risk_managed_backtest`) **divergiu** logo na primeira tentativa --
+0,54% de diferenca relativa, bem acima da tolerancia. Investigado ate a
+causa raiz: `_today_target_position` usava `build_dataset` (que exige
+rotulo) para extrair a linha de "hoje", mas `build_forward_return_label`
+sempre marca as ultimas `horizon_days` linhas como NaN (falta preco
+futuro) -- e o dropna descartava a linha de hoje mesmo com
+`horizon_days=1`, silenciosamente pegando ONTEM em vez de HOJE. **Todo
+dia desde o lancamento da Etapa 6 calculou a posicao com um dia de
+atraso nos dados.** Corrigido usando `build_features` diretamente (sem
+depender de rotulo, que so faz sentido para treino, nunca para
+inferencia do dia atual). Confirmado por teste que reproduz o cenario:
+com a correcao, motor em lote e script diario batem exatamente. Isso e
+o proprio objetivo da Etapa 6 funcionando como projetado -- a
+comparacao backtest-vs-real achou um bug real na primeira vez que foi
+construida.
+
+**`paper_trading/report.py`**: resumo por ativo (dias, retorno
+acumulado, equity, avisos) e deteccao de dado parado --
+`STALENESS_WARNING_DAYS=5` cobre um fim de semana + folga de um feriado;
+acima disso, avisa explicitamente em vez de tratar "sem dado novo"
+sempre da mesma forma (que esconderia uma falha real do `yfinance` por
+tras de um silencio identico ao de um fim de semana comum).
+
+**`paper_trading/consistency_check.py`**: a checagem central da Etapa 6
+-- roda o motor em lote sobre o mesmo periodo do log real, usando o
+MESMO modelo congelado, e compara equity dia a dia. Ja provou o proprio
+valor (achou o bug acima).
+
+**`paper_trading/dashboard.py` + `run_stage6_report.py`**: dashboard
+HTML autocontido (grafico de curva de capital embutido em base64, sem
+precisar de servidor nem gerar arquivo separado por ativo) com tabela
+de status, resumo e resultado da checagem de consistencia por ativo.
+Gerado automaticamente pelo workflow do GitHub Actions apos cada
+atualizacao diaria, commitado junto (`paper_trading/dashboard.html`) --
+baixa esse arquivo e abre no navegador para ver o progresso, sem
+precisar copiar CSV nenhum.
+
+146/146 testes passam.
 
 ## Próximos passos
 
