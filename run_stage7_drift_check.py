@@ -25,7 +25,7 @@ from config import (
     PAPER_TRADING_TICKERS,
     PREDICTION_HORIZON_DAYS, STOP_LOSS_PCT, VAR_CONFIDENCE_LEVEL,
 )
-from data.real import load_all
+from paper_trading.prices import load_canonical
 from models.labels import build_forward_return_label
 from paper_trading.consistency_check import check_consistency
 from paper_trading.drift import feature_drift, performance_drift
@@ -113,15 +113,15 @@ def main() -> None:
         "independente suficiente. Limiares fixados em `config.py` antes de qualquer resultado. "
         "Nenhum modelo e trocado automaticamente.", "",
     ]
-    real = None
     for ticker in PAPER_TRADING_TICKERS:
         log, versions = load_log(ticker), list_versions(ticker)
         if log is None or not versions:
             report += [f"## {ticker}", "- sem historico de paper trading ainda", ""]
             continue
-        if real is None:
-            real = load_all(PAPER_TRADING_TICKERS, BACKTEST_START_DATE, None)
-        close = real[ticker]["close"]
+        close = load_canonical(ticker)
+        if close is None:
+            report += [f"## {ticker}", "- serie canonica de precos ainda nao existe (rode o paper trading diario)", ""]
+            continue
         lines, out = analyze_ticker(ticker, close, log, versions, args.retrain_eval or args.promote == ticker)
         report += lines + [""]
 

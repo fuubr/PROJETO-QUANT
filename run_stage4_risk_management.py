@@ -103,7 +103,18 @@ def _get_oos_predictions(close: pd.Series, respect_holdout: bool) -> pd.DataFram
         sma_distance_window=FEATURE_SMA_DISTANCE_WINDOW,
         horizon_days=PREDICTION_HORIZON_DAYS,
     )
-    return _run_walk_forward(dataset)
+    import config as cfg
+    from models.prediction_cache import cache_key, load_cached, save_cached
+    key = cache_key(close, {name: getattr(cfg, name, None) for name in (
+        "FEATURE_MOMENTUM_WINDOWS", "FEATURE_VOLATILITY_WINDOW", "FEATURE_SMA_DISTANCE_WINDOW",
+        "PREDICTION_HORIZON_DAYS", "WALK_FORWARD_MIN_TRAIN_DAYS", "WALK_FORWARD_TEST_WINDOW_DAYS",
+        "WALK_FORWARD_PURGE_DAYS", "CALIBRATION_FRACTION", "CALIBRATION_METHOD_MIN_SAMPLES_FOR_ISOTONIC", "SEED")})
+    cached = load_cached(key)
+    if cached is not None:
+        return cached
+    predictions = _run_walk_forward(dataset)
+    save_cached(key, predictions)
+    return predictions
 
 
 def _active_window_signal_stats(signal: pd.Series, active_days: int) -> tuple[float, float]:

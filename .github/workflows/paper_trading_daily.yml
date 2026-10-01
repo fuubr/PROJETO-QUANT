@@ -53,7 +53,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add paper_trading/state/ paper_trading/models/ paper_trading/dashboard.html
+          git add paper_trading/state/ paper_trading/models/ paper_trading/prices/ paper_trading/dashboard.html paper_trading/daily_summary.txt
           # So commita se algo realmente mudou (ex: fim de semana ou
           # feriado sem dado novo nao deve gerar commit vazio).
           if ! git diff --cached --quiet; then
@@ -70,4 +70,21 @@ jobs:
             git push
           else
             echo "Nada novo para commitar hoje (provavelmente sem dado de mercado novo)."
+          fi
+
+      - name: Notificar resumo no Telegram (opcional)
+        # So roda se os secrets TELEGRAM_BOT_TOKEN e TELEGRAM_CHAT_ID existirem
+        # no repositorio (Settings > Secrets and variables > Actions). Sem
+        # eles, este passo e ignorado -- nada quebra.
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -n "$TG_TOKEN" ] && [ -n "$TG_CHAT" ] && [ -f paper_trading/daily_summary.txt ]; then
+            MSG="Paper trading $(date -u +%Y-%m-%d)"$'\n'"$(cat paper_trading/daily_summary.txt)"
+            curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+              --data-urlencode "chat_id=${TG_CHAT}" \
+              --data-urlencode "text=${MSG}" > /dev/null
+          else
+            echo "Telegram nao configurado -- pulando notificacao."
           fi

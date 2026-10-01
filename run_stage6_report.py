@@ -22,7 +22,7 @@ from config import (
     STOP_LOSS_PCT,
     VAR_CONFIDENCE_LEVEL,
 )
-from data.real import load_all
+from paper_trading.prices import load_canonical
 from paper_trading.consistency_check import check_consistency
 from paper_trading.dashboard import generate_dashboard
 from paper_trading.model_store import list_versions
@@ -31,15 +31,15 @@ from paper_trading.state import load_log
 from run_stage6_paper_trading_daily import _asset_costs, _circuit_breaker_thresholds
 
 DASHBOARD_PATH = Path(__file__).resolve().parent / "paper_trading" / "dashboard.html"
+SUMMARY_PATH = Path(__file__).resolve().parent / "paper_trading" / "daily_summary.txt"
 
 
 def main() -> None:
     today = pd.Timestamp.now()
     summaries = []
+    summary_lines = []
     logs = {}
     consistency_results = {}
-
-    real_data = None
 
     for ticker in PAPER_TRADING_TICKERS:
         log = load_log(ticker)
@@ -49,6 +49,7 @@ def main() -> None:
 
         summary = summarize_ticker_log(ticker, log, today, max_staleness_days=STALENESS_WARNING_DAYS)
         print(format_summary_line(summary))
+        summary_lines.append(format_summary_line(summary))
         summaries.append(summary)
         logs[ticker] = log
 
@@ -56,16 +57,15 @@ def main() -> None:
         if not versions:
             continue
 
-        if real_data is None:
-            real_data = load_all(PAPER_TRADING_TICKERS, str(log.index.min().date()), None)
-        if ticker not in real_data:
+        canonical = load_canonical(ticker)
+        if canonical is None:
             continue
 
         fee_bps, slippage_bps = _asset_costs(ticker)
         circuit_breaker_pct, asset_circuit_breaker_pct = _circuit_breaker_thresholds(ticker)
 
         result = check_consistency(
-            ticker, real_data[ticker]["close"], versions, log, fee_bps=fee_bps, slippage_bps=slippage_bps,
+            ticker, canonical, versions, log, fee_bps=fee_bps, slippage_bps=slippage_bps,
             circuit_breaker_pct=circuit_breaker_pct, asset_circuit_breaker_pct=asset_circuit_breaker_pct,
             stop_loss_pct=STOP_LOSS_PCT, var_confidence_level=VAR_CONFIDENCE_LEVEL,
             clean_after=pd.Timestamp(PAPER_TRADING_BUGGY_THROUGH),
@@ -79,6 +79,7 @@ def main() -> None:
         print("Nenhum historico de paper trading encontrado ainda para nenhum ativo.")
         return
 
+    SUMMARY_PATH.write_text("\n".join(summary_lines), encoding="utf-8")
     generate_dashboard(summaries, logs, consistency_results, DASHBOARD_PATH, generated_at=today)
     print(f"\nDashboard gerado em: {DASHBOARD_PATH}")
 

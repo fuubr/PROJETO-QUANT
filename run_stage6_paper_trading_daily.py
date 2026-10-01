@@ -62,6 +62,7 @@ from models.calibration import train_models
 from models.dataset import build_dataset, feature_columns
 from models.features import build_features
 from paper_trading.model_store import list_versions, model_for_date, save_frozen_model
+from paper_trading.prices import update_canonical
 from paper_trading.state import append_row, load_log, state_from_last_row
 from risk.kelly import kelly_position_series
 from risk.managed_backtest import RiskState, step_risk_managed_backtest
@@ -199,7 +200,10 @@ def main() -> None:
         if ticker not in real_data:
             print(f"AVISO: sem dados para {ticker}, pulando.")
             continue
-        run_one_day_for_ticker(ticker, real_data[ticker]["close"])
+        # Decisions run on the canonical chain-linked series, never directly
+        # on a fresh download (see paper_trading/prices.py for why).
+        canonical = update_canonical(ticker, real_data[ticker]["close"], load_log(ticker))
+        run_one_day_for_ticker(ticker, canonical)
 
 
 if __name__ == "__main__":
