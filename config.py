@@ -222,3 +222,11 @@ CRISIS_PERIODS: list[tuple[str, str]] = [
 PAPER_TRADING_TICKERS = STAGE3_TICKERS
 
 PAPER_TRADING_INITIAL_CAPITAL = INITIAL_CAPITAL
+
+# Numero de dias corridos sem dado novo que ainda e normal (cobre um fim
+# de semana comum + folga para um feriado isolado). Acima disso, o script
+# diario e o resumo (paper_trading/report.py) avisam explicitamente --
+# passar disso sem ninguem notar pode esconder um problema real no feed
+# de dados (yfinance fora do ar, ticker delistado, etc.), nao so um
+# feriado.
+STALENESS_WARNING_DAYS = 5

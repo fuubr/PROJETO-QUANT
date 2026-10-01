@@ -46,13 +46,26 @@ jobs:
       - name: Rodar um dia de paper trading
         run: python run_stage6_paper_trading_daily.py
 
-      - name: Commitar o estado atualizado
+      - name: Gerar relatorio e dashboard
+        run: python run_stage6_report.py
+
+      - name: Commitar o estado e o dashboard atualizados
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add paper_trading/state/ paper_trading/models/
+          git add paper_trading/state/ paper_trading/models/ paper_trading/dashboard.html
+          # So commita se algo realmente mudou (ex: fim de semana ou
+          # feriado sem dado novo nao deve gerar commit vazio).
           if ! git diff --cached --quiet; then
             git commit -m "Paper trading: atualizacao diaria automatica ($(date -u +%Y-%m-%d))"
+            # Protege contra a corrida ja observada na pratica: uma execucao
+            # manual disparada perto do horario agendado pode commitar
+            # primeiro, fazendo o push desta execucao ser rejeitado (remote
+            # avancou). O pull --rebase resolve automaticamente, reaplicando
+            # este commit em cima do que ja foi enviado -- sem isso, o
+            # trabalho desta execucao ficava preso no runner e nunca ia pro
+            # repositorio (mesmo nao representando perda real de dado
+            # quando as duas execucoes calculam o mesmo dia de mercado).
             git pull --rebase origin main
             git push
           else
