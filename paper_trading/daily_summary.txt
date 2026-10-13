@@ -1,4 +1,4 @@
-SPY: 25 dias (2026-08-31 a 2026-10-09), retorno acumulado -0.00%, equity 99,999.06, posicao atual 0.3261
-AAPL: 25 dias (2026-08-31 a 2026-10-09), retorno acumulado +0.89%, equity 100,891.83, posicao atual 0.1744
+SPY: 26 dias (2026-08-31 a 2026-10-12), retorno acumulado -0.02%, equity 99,980.05, posicao atual 0.2613
+AAPL: 26 dias (2026-08-31 a 2026-10-12), retorno acumulado +1.10%, equity 101,101.16, posicao atual 0.1618
 PETR4.SA: 25 dias (2026-08-31 a 2026-10-09), retorno acumulado +3.19%, equity 103,185.33, posicao atual 0.1241
 VALE3.SA: 25 dias (2026-08-31 a 2026-10-09), retorno acumulado -1.26%, equity 98,738.44, posicao atual 0.0834 -- AVISOS: 1 disparo(s) de stop-loss
