@@ -103,6 +103,14 @@ foi inspecionada). Motivo: H4 so usava preco; H5 traz informacao que o preco nao
 - **Vieses declarados**: sobrevivencia (como H4); a CVM publica a versao mais recente de
   cada documento, entao reapresentacoes posteriores vazam um pouco de futuro.
 - **Se falhar**: descartada sem variar indicadores, pesos, N ou universo.
+- **Emenda (2026-10-14, antes de calcular qualquer sinal; so estrutura dos dados vista)**:
+  (a) E/P = lucro basico por acao da classe do ticker (DFP, conta 3.99.01.x) / preco
+  ajustado SO por desdobramentos, com o LPA trazido para a base do preco pelos eventos
+  posteriores ao fim do exercicio -- dispensa o FRE, cuja data de contagem de acoes e
+  ambigua perto de desdobramentos (erro de ate 2x no valor de mercado);
+  (b) units fora (SANB11, TAEE11, KLBN11, ENGI11): a composicao mudou no periodo
+  (ex.: SANB11 em 2012) -> universo de 37;
+  (c) |E/P| > 1 ou LPA = 0 com lucro != 0 -> inelegivel (erro de dado), regra fixada agora.
 
 ## Parada
 - Veredito **DEGRADADO** em qualquer relatorio semanal com amostra suficiente: o sinal do
