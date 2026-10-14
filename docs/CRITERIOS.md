@@ -17,7 +17,7 @@ de janelas de 20 dias). Antes disso, relatorios dizem INSUFICIENTE e nada e deci
 3. **O modelo agrega valor sobre o dimensionamento**: retorno diario do
    `kelly_modelo` menos `ablacao_sem_modelo` e menos `exposicao_igualada` positivo, com
    Newey-West p < 0,05 (Bonferroni x2) -- `run_baseline_ablation.py` com dados ao vivo.
-4. (proposta nova, requer aprovacao) A estrategia final nao pode ter Sharpe inferior ao do
+4. (aprovado em 2026-10-14) A estrategia final nao pode ter Sharpe inferior ao do
    baseline `vol_target` (sem modelo) no mesmo periodo limpo -- senao a complexidade extra
    nao se justifica. Surgiu da analise de baselines (ver `leitura_baselines.md`).
 5. Resultado nao depende de um unico ativo: vale em pelo menos 2 dos 4, lembrando que
