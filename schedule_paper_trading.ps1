@@ -11,7 +11,8 @@
 # fechamento do dia ja esta disponivel para os 4 ativos (SPY, AAPL,
 # PETR4.SA, VALE3.SA) antes do script rodar.
 
-$pythonExe = "C:\Users\SEU_USUARIO\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe"
+# Python usado pela tarefa: o primeiro "python" no PATH. Troque pelo caminho completo se precisar.
+$pythonExe = (Get-Command python).Source
 $scriptPath = Join-Path $PSScriptRoot "run_stage6_paper_trading_daily.py"
 $projectDir = $PSScriptRoot
 $logPath = Join-Path $PSScriptRoot "paper_trading\daily_run_log.txt"
