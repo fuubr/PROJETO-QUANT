@@ -63,6 +63,7 @@ from models.dataset import build_dataset, feature_columns
 from models.features import build_features
 from paper_trading.model_store import list_versions, model_for_date, save_frozen_model
 from paper_trading.prices import update_canonical
+from paper_trading.rule_runner import RULES, run_rule_day
 from paper_trading.state import append_row, load_log, state_from_last_row
 from risk.kelly import kelly_position_series
 from risk.managed_backtest import RiskState, step_risk_managed_backtest
@@ -204,6 +205,10 @@ def main() -> None:
         # on a fresh download (see paper_trading/prices.py for why).
         canonical = update_canonical(ticker, real_data[ticker]["close"], load_log(ticker))
         run_one_day_for_ticker(ticker, canonical)
+        # Model-free rules (H2/H3) and the buy-and-hold reference: same prices,
+        # same engine, separate logs (paper_trading/rule_runner.py).
+        for rule in RULES:
+            run_rule_day(ticker, rule, canonical)
 
 
 if __name__ == "__main__":

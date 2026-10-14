@@ -29,6 +29,8 @@ import numpy as np
 import pandas as pd
 
 from backtest.baselines import buy_and_hold_signal
+from backtest.deflated_sharpe import deflated_sharpe_ratio, sharpe_difference_test
+from strategies.rules import trend_vol_target_position, vol_target_position
 from backtest.statistics import mean_return_significance
 from config import (
     BACKTEST_START_DATE, INITIAL_CAPITAL, KELLY_FRACTION, KELLY_MIN_LOSS_OBSERVATIONS,
@@ -92,6 +94,14 @@ def _metrics(result, rf: pd.Series) -> dict:
     }
 
 
+def _rule_signal(close: pd.Series, rule, window: pd.Series) -> pd.Series:
+    """Target for each date t of the window = rule(prices up to t): exactly
+    what the live daily runner computes, one day at a time (causal).
+    """
+
+    return pd.Series([rule(close.loc[:t], VOL_TARGET_ANNUAL) for t in window.index], index=window.index)
+
+
 def analyze(name, close, fee, slip, cb_pct, acb_pct, respect_holdout, risk_free=None):
     predictions = _get_oos_predictions(close, respect_holdout=respect_holdout)
     window = comparison_window(close, predictions)
@@ -107,23 +117,37 @@ def analyze(name, close, fee, slip, cb_pct, acb_pct, respect_holdout, risk_free=
     bh_overlay = run_risk_managed_backtest(window, buy_and_hold_signal(window.index), **common, **on)
     f = float(kelly.actual_position.iloc[1:].mean())
     matched = run_risk_managed_backtest(window, pd.Series(f, index=window.index), **common, **off)
-    vol = close.pct_change().rolling(20).std() * np.sqrt(TRADING_DAYS_PER_YEAR)
-    vt_signal = (VOL_TARGET_ANNUAL / vol).clip(0, 1).reindex(window.index).fillna(0.0)
-    vol_target = run_risk_managed_backtest(window, vt_signal, **common, **off)
+    # H2/H3 use the SAME functions the live paper trading runs (strategies/rules.py).
+    vol_target = run_risk_managed_backtest(window, _rule_signal(close, vol_target_position, window), **common, **off)
+    trend_vol = run_risk_managed_backtest(window, _rule_signal(close, trend_vol_target_position, window), **common, **off)
 
     runs = {
         "kelly_modelo (c/ stops)": kelly, "ablacao_sem_modelo (c/ stops)": ablation,
-        "exposicao_igualada (s/ stops)": matched, "vol_target (s/ stops)": vol_target,
+        "exposicao_igualada (s/ stops)": matched, "H2_vol_target (s/ stops)": vol_target,
+        "H3_tendencia_vol (s/ stops)": trend_vol,
         "buy_and_hold_puro (s/ stops)": bh_pure, "buy_and_hold (c/ breaker)": bh_overlay,
     }
     table = pd.DataFrame({k: _metrics(v, rf) for k, v in runs.items()}).T
+
+    # Deflated Sharpe: the best of many tries is inflated by the search. N is a
+    # DECLARED LOWER BOUND (strategies in this table x 4 assets); the project
+    # tried more variants than that over its history, so the true DSR is lower.
+    daily = {k: v.net_returns.iloc[1:] for k, v in runs.items()}
+    sharpes = np.array([r.mean() / r.std(ddof=1) for r in daily.values() if r.std(ddof=1) > 0])
+    n_trials = len(runs) * len(STAGE3_TICKERS)
+    table["dsr"] = [round(deflated_sharpe_ratio(r, n_trials, float(sharpes.var(ddof=1))), 3)
+                    if r.std(ddof=1) > 0 else float("nan") for r in daily.values()]
 
     tests = {}
     for label, other in (("modelo - ablacao", ablation), ("modelo - exposicao_igualada", matched)):
         diff = kelly.net_returns.iloc[1:] - other.net_returns.iloc[1:]
         sig = mean_return_significance(diff, num_tests=2)
         tests[label] = (float(diff.mean() * TRADING_DAYS_PER_YEAR), sig["t_stat"], sig["p_value"], sig["significant"])
-    return table, tests, (window.index[0].date(), window.index[-1].date(), len(window)), rf_source
+    sharpe_tests = {
+        label: sharpe_difference_test(rule.net_returns.iloc[1:], bh_pure.net_returns.iloc[1:])
+        for label, rule in (("H2 vol-target vs buy-and-hold", vol_target), ("H3 tendencia+vol vs buy-and-hold", trend_vol))
+    }
+    return table, tests, (window.index[0].date(), window.index[-1].date(), len(window)), rf_source, sharpe_tests, n_trials
 
 
 def main() -> None:
@@ -135,7 +159,7 @@ def main() -> None:
           ".SA, FRED T-bill 3m para os demais; a fonte aparece em cada secao).", ""]
     for ticker, frame in real.items():
         fee, slip = _asset_costs(ticker)
-        table, tests, (start, end, n), rf_source = analyze(
+        table, tests, (start, end, n), rf_source, sharpe_tests, n_trials = analyze(
             ticker, frame["close"], fee, slip, _circuit_breaker_threshold(ticker),
             _asset_level_circuit_breaker_threshold(ticker), respect_holdout=True)
         print(f"\n=== {ticker} ({start} a {end}, {n} dias; caixa: {rf_source}) ===\n{table.to_string()}")
@@ -143,6 +167,11 @@ def main() -> None:
                "Teste de diferenca (Newey-West, Bonferroni x2): retorno anualizado da diferenca, t, p", ""]
         for label, (ann, t, p, sig) in tests.items():
             line = f"- {label}: {ann:+.2%} a.a., t={t:.2f}, p={p:.3f}, significativo={sig}"
+            print(line); md.append(line)
+        md += ["", f"Diferenca de Sharpe contra o buy-and-hold puro (Memmel; historico, so descritivo -- "
+                   f"H2/H3 sao decididas no paper trading). DSR com N={n_trials} tentativas declaradas (limite inferior):", ""]
+        for label, (z, p) in sharpe_tests.items():
+            line = f"- {label}: z={z:+.2f}, p={p:.3f}"
             print(line); md.append(line)
         md.append("")
     OUT_PATH.parent.mkdir(exist_ok=True)

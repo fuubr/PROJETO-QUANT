@@ -35,10 +35,10 @@ def test_causal_base_rate_only_uses_labels_matured_by_t():
 def test_analyze_returns_all_strategies_and_tests():
     close = _close(1500, 3)
     rf = pd.Series(0.0002, index=close.index)  # injected: tests must never touch the network
-    table, tests, (start, end, n), source = analyze(
+    table, tests, (start, end, n), source, _, _ = analyze(
         "FAKE", close, 5.0, 2.0, 0.20, None, respect_holdout=False, risk_free=(rf, "teste"))
     assert source == "teste"
-    assert len(table) == 6 and n > 100
+    assert len(table) == 7 and "dsr" in table.columns and n > 100
     assert {"retorno", "sharpe", "max_dd", "exposicao_media", "retorno_c/_caixa", "sharpe_excesso_rf"} <= set(table.columns)
     assert set(tests) == {"modelo - ablacao", "modelo - exposicao_igualada"}
     # the matched-exposure baseline is built to have the same average exposure as the model strategy

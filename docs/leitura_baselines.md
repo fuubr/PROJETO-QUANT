@@ -43,3 +43,17 @@ caixa estava superestimado, e valores como "Sharpe 7-25" na PETR4 eram artefato.
 O paper trading e o unico teste realmente fora da amostra. Os criterios em `CRITERIOS.md`
 foram escritos para que, se o modelo nao tiver informacao, isso apareca como "parar" e nao
 como "mais uma rodada de ajuste".
+
+## Atualizacao 2026-10-14: H2, H3 e Deflated Sharpe (historico, so descritivo)
+H2 (vol-target) e H3 (tendencia 12m + vol-target) foram pre-registradas em `CRITERIOS.md`
+ANTES deste calculo e usam exatamente as funcoes que rodam ao vivo (`strategies/rules.py`).
+- Nenhuma estrategia, em nenhum ativo, tem DSR >= 0,95 (N=28 tentativas declaradas, limite
+  inferior). Melhor caso: H2 em AAPL, DSR 0,92.
+- H2 contra buy-and-hold (Memmel): p = 0,58 / 0,06 / 0,59 / 0,71 (SPY/AAPL/PETR4/VALE3).
+  H3: p = 0,96 / 0,94 / 0,55 / 0,79. Nada significativo, nem antes da correcao de Bonferroni.
+- O que H2/H3 entregam no historico e drawdown bem menor (-12 a -17% contra -34 a -63%),
+  nao Sharpe maior com evidencia.
+- Os numeros do modelo mudaram levemente desde a ultima rodada (ex.: SPY Kelly 18,2% -> 16,9%)
+  porque o yfinance reajustou o historico baixado; mesma conclusao.
+Conclusao: no historico nada supera o buy-and-hold com evidencia. A decisao sobre H2/H3 fica
+para o paper trading, como registrado.

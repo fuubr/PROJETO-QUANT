@@ -970,3 +970,9 @@ comparar.
 - Achado novo: em PETR4 e VALE3 a estrategia rendeu menos que o CDI puro (+40,9% / +45,8% contra
   +50,7%).
 - Testes sem rede para o modulo (8) e injecao da taxa na analise. Total: 183 testes.
+
+## H2/H3 (regras sem modelo) e Deflated Sharpe
+
+- `strategies/rules.py` (vol-target, tendencia+vol-target), `paper_trading/rule_runner.py` (logs proprios `<ATIVO>__<regra>.csv`, sem stops, buy-and-hold de referencia), `backtest/deflated_sharpe.py` (DSR + teste de Memmel). Construido em TDD; dois valores esperados que eu calculei errado a mao (vol 0,16245 em vez de 0,16287; custo SPY 7 em vez de 5 bps) foram pegos pelos proprios testes.
+- Bug evitado no relatorio: as regras ficavam depois dos `continue` do modelo e seriam puladas se o modelo faltasse; movidas para o inicio do loop.
+- Pre-registro em `CRITERIOS.md` antes de qualquer calculo de H3. 202 testes.

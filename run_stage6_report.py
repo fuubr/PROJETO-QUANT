@@ -27,6 +27,7 @@ from paper_trading.consistency_check import check_consistency
 from paper_trading.dashboard import generate_dashboard
 from paper_trading.model_store import list_versions
 from paper_trading.report import format_summary_line, summarize_ticker_log
+from paper_trading.rule_runner import RULES, rule_log_key
 from paper_trading.state import load_log
 from run_stage6_paper_trading_daily import _asset_costs, _circuit_breaker_thresholds
 
@@ -42,6 +43,19 @@ def main() -> None:
     consistency_results = {}
 
     for ticker in PAPER_TRADING_TICKERS:
+        # H2/H3 rules and the buy-and-hold reference. First, so nothing about
+        # the model's own state (missing log, versions or prices) can skip them.
+        for rule in RULES:
+            key = rule_log_key(ticker, rule)
+            rule_log = load_log(key)
+            if rule_log is None:
+                continue
+            rule_summary = summarize_ticker_log(key, rule_log, today, max_staleness_days=STALENESS_WARNING_DAYS)
+            print(format_summary_line(rule_summary))
+            summary_lines.append(format_summary_line(rule_summary))
+            summaries.append(rule_summary)
+            logs[key] = rule_log
+
         log = load_log(ticker)
         if log is None:
             print(f"{ticker}: sem historico ainda (paper trading nunca rodou para este ativo).")
