@@ -38,12 +38,16 @@ def load_closes() -> pd.DataFrame:
     return closes
 
 
-def evaluate(closes: pd.DataFrame, rf_monthly: pd.Series | None) -> dict:
-    h4 = run_monthly_portfolio(closes, h4_select, H4_COST_BPS)
-    ew = run_monthly_portfolio(closes, equal_weight_select, H4_COST_BPS)
+def evaluate(closes: pd.DataFrame, rf_monthly: pd.Series | None, select=h4_select,
+             bench=equal_weight_select, num_tests: int = NUM_TESTS) -> dict:
+    """Teste 1 pre-registrado (H4 e H5 usam o mesmo): diferenca mensal contra o
+    benchmark com Newey-West + Bonferroni, e Sharpe de excesso maior."""
+
+    h4 = run_monthly_portfolio(closes, select, H4_COST_BPS)
+    ew = run_monthly_portfolio(closes, bench, H4_COST_BPS)
     h4, ew = h4.loc[H4_DEV_START:], ew.loc[H4_DEV_START:]
     diff = h4 - ew
-    sig = mean_return_significance(diff, num_tests=NUM_TESTS)
+    sig = mean_return_significance(diff, num_tests=num_tests)
     rf = rf_monthly.reindex(h4.index).fillna(0.0) if rf_monthly is not None else 0.0
 
     def sharpe(r):
@@ -73,8 +77,9 @@ def synthetic_like(closes: pd.DataFrame, seed: int) -> pd.DataFrame:
     return fake.where(closes.notna())
 
 
-def main() -> None:
-    closes = load_closes().loc[:H4_DEV_END]
+def monthly_rf(closes: pd.DataFrame) -> tuple[pd.Series, str]:
+    """CDI composto por mes, indexado pelo ultimo pregao do mes."""
+
     rf_daily, rf_source = risk_free_daily("PETR4.SA", closes.index)
     rf_monthly = (1 + rf_daily).groupby(rf_daily.index.to_period("M")).prod() - 1
     rf_monthly.index = rf_monthly.index.to_timestamp("M")
@@ -82,7 +87,12 @@ def main() -> None:
     # alinhar ao ultimo pregao do mes
     month_last = pd.Series(closes.index, index=closes.index).groupby(closes.index.to_period("M")).max()
     rf_monthly.index = month_last.reindex(rf_monthly.index.to_period("M")).values
+    return rf_monthly, rf_source
 
+
+def main() -> None:
+    closes = load_closes().loc[:H4_DEV_END]
+    rf_monthly, rf_source = monthly_rf(closes)
     real = evaluate(closes, rf_monthly)
     synth = [evaluate(synthetic_like(closes, s), None) for s in range(N_SYNTHETIC)]
     synth_pass = sum(s["passou"] for s in synth)

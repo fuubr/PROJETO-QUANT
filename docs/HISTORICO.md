@@ -988,3 +988,19 @@ comparar.
   retornos simples, criando um premio de baixa vol falso (6 de 50 random walks "passavam").
   Corrigido (1 de 50, compativel com acaso) e travado por teste. O resultado real nao mudou.
 - `strategies/cross_section.py`, `run_h4_momentum.py`, `docs/h4_resultado.md`.
+
+## H5: valor (E/P) + qualidade (ROE) com balancos da CVM -- descartada
+
+- Pre-registro (`b7bbe66`) e emenda (`8796d84`) antes de qualquer sinal: a emenda trocou o
+  valor de mercado do FRE (data de contagem ambigua perto de desdobramentos) pelo LPA do
+  DFP e tirou as units (composicao mudou no periodo, ex.: SANB11 em 2012).
+- `data/cvm.py`: DFP com PRIMEIRA data de recebimento (point-in-time; reapresentacoes
+  posteriores vazam um pouco -- declarado). Lucro/PL lidos pela descricao da conta (o
+  codigo muda entre bancos e industria).
+- Bug pego na checagem de dados ANTES do teste: o yfinance ajusta o historico pelos
+  desdobramentos ate hoje, inclusive os posteriores ao corte; sem esses eventos o E/P do
+  BBAS3 saia dobrado (0,38 em vez de 0,19). Corrigido usando os eventos ate hoje (so datas
+  societarias, nenhum preco pos-corte).
+- Teste 1 (2012-2023): H5 +16,7% a.a. contra +15,8%; diferenca +1,5% a.a., p=0,73
+  (limite 0,01). Sharpe 0,40 contra 0,39. **Nao passou -> descartada.** Controle
+  sintetico: 0 de 50.
