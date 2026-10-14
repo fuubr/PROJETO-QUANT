@@ -66,26 +66,6 @@ def test_circuit_breaker_threshold_uses_override_when_present():
         assert _circuit_breaker_threshold("SPY") != 0.35
 
 
-def test_circuit_breaker_threshold_uses_global_default_without_override():
-    from unittest.mock import patch
-
-    with patch("run_stage4_risk_management.ASSET_CIRCUIT_BREAKER_OVERRIDES", {}):
-        from run_stage4_risk_management import _circuit_breaker_threshold
-        from config import CIRCUIT_BREAKER_DRAWDOWN_PCT
-
-        assert _circuit_breaker_threshold("SPY") == CIRCUIT_BREAKER_DRAWDOWN_PCT
-
-
-def test_circuit_breaker_threshold_uses_override_when_present():
-    from unittest.mock import patch
-
-    with patch("run_stage4_risk_management.ASSET_CIRCUIT_BREAKER_OVERRIDES", {"PETR4.SA": 0.35}):
-        from run_stage4_risk_management import _circuit_breaker_threshold
-
-        assert _circuit_breaker_threshold("PETR4.SA") == 0.35
-        assert _circuit_breaker_threshold("SPY") != 0.35
-
-
 def test_active_window_signal_stats_ignores_variation_after_active_window():
     """Regression test for a real diagnostic bug found during development:
     measuring signal variation over the FULL comparison window was

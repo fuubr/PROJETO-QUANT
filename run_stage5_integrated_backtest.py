@@ -103,7 +103,7 @@ def _run_regime_segmented_backtest(
               f"max_drawdown: {result.max_drawdown:.4f}, win_rate: {result.win_rate:.4f}")
 
     regime_table = pd.DataFrame(regime_rows).set_index(["regime", "estrategia"]).sort_index()
-    print(f"\n  Metricas por regime (bull vs janelas de crise conhecidas):")
+    print("\n  Metricas por regime (bull vs janelas de crise conhecidas):")
     print(regime_table)
 
     plot_path = RESULTS_DIR / f"etapa5_equity_curve_{name}.png"

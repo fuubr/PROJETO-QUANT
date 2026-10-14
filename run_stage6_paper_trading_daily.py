@@ -28,7 +28,6 @@ changed".
 
 from __future__ import annotations
 
-import sys
 
 import pandas as pd
 
@@ -192,7 +191,7 @@ def run_one_day_for_ticker(ticker: str, close: pd.Series) -> None:
     if new_state.circuit_breaker_triggered and not state.circuit_breaker_triggered:
         print(f"  *** CIRCUIT BREAKER DISPAROU HOJE ({new_state.circuit_breaker_reason}) ***")
     if new_state.stop_loss_triggers > state.stop_loss_triggers:
-        print(f"  *** STOP-LOSS DISPAROU HOJE ***")
+        print("  *** STOP-LOSS DISPAROU HOJE ***")
 
 
 def main() -> None:

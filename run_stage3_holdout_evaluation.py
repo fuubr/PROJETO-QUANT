@@ -86,11 +86,7 @@ from models.calibration import train_models
 from models.comparison import comparison_window, predictions_to_backtest_signal
 from models.dataset import build_dataset, feature_columns
 from models.evaluation import (
-    brier_score,
-    expected_calibration_error,
-    max_calibration_gap,
     print_calibration_report,
-    reliability_diagram_data,
 )
 
 

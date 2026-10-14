@@ -53,7 +53,6 @@ def test_holdout_dataset_features_use_trailing_dev_data_for_warmup():
     from holdout_close alone.
     """
 
-    horizon_days = 20
     n = 2000
     index = pd.bdate_range("2015-01-01", periods=n)
     close = pd.Series(100.0 + pd.Series(range(n)).to_numpy() * 0.01, index=index)

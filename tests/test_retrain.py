@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from paper_trading.model_store import ModelVersion, list_versions, model_for_date, register_version, save_frozen_model
+from paper_trading.model_store import list_versions, model_for_date, register_version, save_frozen_model
 from paper_trading.predictions import versioned_probabilities
 from paper_trading.retrain import evaluate_challenger, promote, train_on_history
 
@@ -53,7 +53,7 @@ def test_versions_start_with_the_frozen_base_and_never_backdate(store):
 
 def test_model_for_date_picks_the_governing_version(store):
     close = _close(1400)
-    cut = _freeze(close)
+    _freeze(close)
     v1 = list_versions("T")[0]
     register_version("T", v1.trained, close.index[1300], close.index[1301])
     versions = list_versions("T")
@@ -65,7 +65,7 @@ def test_model_for_date_picks_the_governing_version(store):
 
 def test_versioned_probabilities_use_each_versions_own_model(store):
     close = _close(1400)
-    cut = _freeze(close)
+    _freeze(close)
     v1 = list_versions("T")[0]
     other = train_on_history(close, close.index[1000])  # a genuinely different model
     register_version("T", other, close.index[1000], close.index[1300])

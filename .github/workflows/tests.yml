@@ -8,6 +8,10 @@ on:
   push:
   pull_request:
 
+# Repositorio publico: PRs de qualquer pessoa rodam este job. So leitura.
+permissions:
+  contents: read
+
 jobs:
   pytest:
     runs-on: ubuntu-latest

@@ -71,17 +71,13 @@ from config import (
     WALK_FORWARD_PURGE_DAYS,
     WALK_FORWARD_TEST_WINDOW_DAYS,
 )
-from data.real import load_all, resolve_end_date
+from data.real import load_all
 from data.synthetic import generate_random_walk_prices
 from models.calibration import train_models, train_xgboost_for_interpretation
 from models.comparison import comparison_window, predictions_to_backtest_signal
 from models.dataset import build_dataset, feature_columns
 from models.evaluation import (
-    brier_score,
-    expected_calibration_error,
-    max_calibration_gap,
     print_calibration_report,
-    reliability_diagram_data,
 )
 from models.features import check_feature_correlation
 from models.walk_forward import generate_walk_forward_splits
@@ -198,8 +194,8 @@ def _run_shap_analysis(dataset: pd.DataFrame, ticker: str) -> None:
 
     correlated_pairs = check_feature_correlation(X, threshold=0.7)
     if not correlated_pairs.empty:
-        print(f"  AVISO: pares de features com |correlacao| >= 0.7 (distorce leitura do SHAP "
-              f"e desestabiliza coeficientes da regressao logistica):")
+        print("  AVISO: pares de features com |correlacao| >= 0.7 (distorce leitura do SHAP "
+              "e desestabiliza coeficientes da regressao logistica):")
         print(correlated_pairs.to_string(index=False))
     else:
         print("  Nenhum par de features com |correlacao| >= 0.7.")
