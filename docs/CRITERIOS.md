@@ -46,6 +46,38 @@ DSR < 0,95 rebaixa qualquer "sucesso" para "inconclusivo".
 **Se falharem**: a regra e descartada como esta. Sem variar a janela (20/252), o alvo (10%)
 ou o limite -- isso seria uma nova hipotese, com novo pre-registro e novos dados.
 
+## Hipotese H4: ranking momentum + baixa volatilidade na B3 (pre-registrada em 2026-10-14)
+
+Registrada ANTES de calcular qualquer numero desta regra (o commit deste texto precede o
+codigo). Muda a pergunta: em vez de "esta acao sobe?", **"quais acoes vao render mais que as
+outras?"**. Parametros sao os padroes da literatura (Jegadeesh-Titman 12-1; low-vol de
+Ang et al. / Baker et al.), nao escolhidos olhando dados deste projeto.
+
+- **Universo (congelado)**: 42 acoes da B3 em `config.H4_UNIVERSE` -- as da lista
+  pre-definida com historico no yfinance. Vies de sobrevivencia declarado: 8 nomes da lista
+  inicial nao tem historico (deslistados/renomeados) e foram excluidos; o benchmark usa o
+  MESMO universo, o que neutraliza parte do vies na comparacao, nao no retorno absoluto.
+- **Elegivel** no rebalanceamento: >= 273 pregoes de historico.
+- **Sinal** (fechamento do ultimo pregao do mes, t):
+  momentum 12-1 = close[t-21] / close[t-252] - 1; vol = desvio-padrao dos ultimos 63
+  retornos diarios. Score = percentil(momentum) + percentil(-vol).
+- **Carteira**: as 10 maiores notas, pesos iguais, rebalanceamento mensal, executada no
+  fechamento de t (sinal usa so dados ate t). Custo: 10 bps sobre o valor negociado.
+- **Benchmark justo**: todas as elegiveis com peso igual, mesmo rebalanceamento e custo.
+
+**Teste 1 -- desenvolvimento (2012-01 a 2023-12)**, primeira e unica vez:
+diferenca mensal H4 - benchmark com media > 0 e Newey-West **p < 0,05 / 4** (Bonferroni:
+H1, H2, H3, H4), **e** Sharpe de excesso (CDI) do H4 maior que o do benchmark.
+**Controle sintetico**: a mesma regra em 42 random walks independentes NAO pode passar.
+**Teste 2 -- holdout (2024-01 em diante)**, so se o Teste 1 passar, uma unica vez:
+diferenca mensal media > 0 com p < 0,05 (unilateral). E o holdout desta regra; nao afeta
+o holdout reservado ao pipeline do modelo (H1), que continua intocado.
+**Teste 3 -- paper trading** ao vivo, so se os dois passarem.
+
+**Se falhar em qualquer etapa**: descartada como esta. Sem trocar 10 por 5 acoes, 12 por 6
+meses, 63 por 20 dias, pesos ou universo -- cada variacao seria nova hipotese, e o periodo
+2012-2023 nao pode ser reusado para ela.
+
 ## Parada
 - Veredito **DEGRADADO** em qualquer relatorio semanal com amostra suficiente: o sinal do
   modelo sai do paper trading (fica so o overlay de risco ou nada).
