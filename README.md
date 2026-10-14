@@ -112,3 +112,7 @@ paper_trading/  estado, preços canônicos, consistência, drift, retreino chall
 Um único período, majoritariamente de alta. Quatro ativos que equivalem a ~2 amostras
 independentes. Custos de transação estimados, não medidos. O período 2015–2023 foi consultado
 muitas vezes — serve para descartar hipóteses, não para escolhê-las.
+
+## Licenca
+
+MIT -- ver [`LICENSE`](LICENSE). Nao e recomendacao de investimento.
