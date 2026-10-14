@@ -63,6 +63,10 @@ antes de qualquer dado ao vivo:
 - **H2** — vol-target: exposição = 10% ÷ volatilidade realizada, sem modelo.
 - **H3** — vol-target + filtro de tendência de 12 meses.
 
+Uma quarta hipótese, **H4** (ranking de momentum + baixa volatilidade em 42 ações da B3), foi
+pré-registrada e **reprovada** no primeiro teste: −3,2% a.a. contra a carteira de peso igual
+(p=0,42). Descartada sem ajuste de parâmetros — [`docs/h4_resultado.md`](docs/h4_resultado.md).
+
 Primeira avaliação: ~6 meses de dados (abril/2027), com critérios de sucesso **e de parada**
 fixados antes. Um relatório semanal de drift diz "INSUFICIENTE" até lá — por construção.
 
@@ -87,6 +91,7 @@ Histórico completo de decisões e correções: [`docs/HISTORICO.md`](docs/HISTO
 pip install -r requirements.txt
 python -m pytest                          # suíte completa
 python run_baseline_ablation.py           # baselines, ablação, H2/H3, Deflated Sharpe
+python run_h4_momentum.py                 # H4: ranking cross-section na B3 + controle sintético
 python run_stage6_paper_trading_daily.py  # um dia de paper trading
 python run_stage6_report.py               # resumo + dashboard.html
 python run_stage7_drift_check.py          # relatório de drift
@@ -100,7 +105,7 @@ data/           preços (yfinance), taxas livres de risco (BCB, FRED), ativo sin
 models/         features, rótulos, calibração, walk-forward purgado
 backtest/       motor, estatística (Newey-West, Bonferroni, Deflated Sharpe, Memmel)
 risk/           Kelly fracionário, stop-loss, circuit breaker
-strategies/     regras sem modelo (H2, H3)
+strategies/     regras sem modelo (H2, H3) e ranking cross-section (H4)
 paper_trading/  estado, preços canônicos, consistência, drift, retreino challenger
 .github/        paper trading diário, drift semanal, testes
 ```

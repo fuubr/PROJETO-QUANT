@@ -976,3 +976,15 @@ comparar.
 - `strategies/rules.py` (vol-target, tendencia+vol-target), `paper_trading/rule_runner.py` (logs proprios `<ATIVO>__<regra>.csv`, sem stops, buy-and-hold de referencia), `backtest/deflated_sharpe.py` (DSR + teste de Memmel). Construido em TDD; dois valores esperados que eu calculei errado a mao (vol 0,16245 em vez de 0,16287; custo SPY 7 em vez de 5 bps) foram pegos pelos proprios testes.
 - Bug evitado no relatorio: as regras ficavam depois dos `continue` do modelo e seriam puladas se o modelo faltasse; movidas para o inicio do loop.
 - Pre-registro em `CRITERIOS.md` antes de qualquer calculo de H3. 202 testes.
+
+## H4: ranking momentum + baixa vol na B3 -- descartada
+
+- Pre-registro commitado (`558116c`) antes de qualquer numero: 42 acoes, momentum 12-1 +
+  vol 63d, top 10 peso igual, mensal, 10 bps, contra todas com peso igual.
+- Teste 1 (2012-2023, 143 meses): H4 +13,7% a.a. contra +16,3% do benchmark; diferenca
+  -3,2% a.a., p=0,42. Sharpe de excesso 0,33 contra 0,41. **Nao passou -> descartada como
+  esta**, sem testar variacoes. Holdout 2024+ da H4 nao foi tocado (desnecessario).
+- O controle sintetico pegou um bug MEU no proprio controle: o gerador subtraia 0,5*vol^2 dos
+  retornos simples, criando um premio de baixa vol falso (6 de 50 random walks "passavam").
+  Corrigido (1 de 50, compativel com acaso) e travado por teste. O resultado real nao mudou.
+- `strategies/cross_section.py`, `run_h4_momentum.py`, `docs/h4_resultado.md`.
