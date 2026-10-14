@@ -78,6 +78,32 @@ o holdout reservado ao pipeline do modelo (H1), que continua intocado.
 meses, 63 por 20 dias, pesos ou universo -- cada variacao seria nova hipotese, e o periodo
 2012-2023 nao pode ser reusado para ela.
 
+## Hipotese H5: valor + qualidade com balancos da CVM (pre-registrada em 2026-10-14)
+
+Registrada ANTES de calcular qualquer sinal ou retorno (so a estrutura dos arquivos da CVM
+foi inspecionada). Motivo: H4 so usava preco; H5 traz informacao que o preco nao tem.
+
+- **Universo**: o da H4 menos PETR3 (uma classe por empresa) = 41 acoes.
+- **Dados (CVM, dados abertos)**: DFP anual consolidado (individual se nao houver):
+  lucro liquido do exercicio e patrimonio liquido. Acoes emitidas: FRE (capital
+  integralizado, total). Cada dado so vale a partir do pregao **seguinte** ao `DT_RECEB`.
+  Acoes ajustadas por desdobramentos/grupamentos/bonificacoes (yfinance) para a base do
+  preco; units divididas pelo numero de acoes por unit (SANB11 2, TAEE11 3, KLBN11 5,
+  ENGI11 5). Valor de mercado = preco x acoes totais da empresa (aproximacao declarada para
+  quem tem ON e PN com precos diferentes).
+- **Sinal**: E/P = lucro anual / valor de mercado; ROE = lucro / PL. PL <= 0 ou dado
+  ausente -> inelegivel. Score = percentil(E/P) + percentil(ROE).
+- **Carteira**: igual H4 -- top 10, peso igual, mensal, 10 bps. Benchmark: todas as
+  elegiveis (mesmo filtro de dados), peso igual.
+- **Teste 1 (2012-01 a 2023-12)**: diferenca mensal media > 0 com Newey-West
+  **p < 0,05 / 5** (H1-H5) e Sharpe de excesso (CDI) maior que o do benchmark.
+  **Controle sintetico**: precos trocados por random walks (mesma vol, mesmos balancos
+  reais) -- nao pode passar alem do acaso.
+- **Teste 2 (holdout 2024+)** uma vez, so se o Teste 1 passar; depois paper trading.
+- **Vieses declarados**: sobrevivencia (como H4); a CVM publica a versao mais recente de
+  cada documento, entao reapresentacoes posteriores vazam um pouco de futuro.
+- **Se falhar**: descartada sem variar indicadores, pesos, N ou universo.
+
 ## Parada
 - Veredito **DEGRADADO** em qualquer relatorio semanal com amostra suficiente: o sinal do
   modelo sai do paper trading (fica so o overlay de risco ou nada).
