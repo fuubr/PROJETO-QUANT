@@ -1,16 +1,16 @@
-SPY__buyhold: 25 dias (2026-10-14 a 2026-11-17), retorno acumulado -0.56%, equity 99,437.72, posicao atual 1.0000
-SPY__voltarget: 25 dias (2026-10-14 a 2026-11-17), retorno acumulado -0.38%, equity 99,621.30, posicao atual 0.8106
-SPY__trendvol: 25 dias (2026-10-14 a 2026-11-17), retorno acumulado -0.38%, equity 99,621.30, posicao atual 0.8106
-SPY: 52 dias (2026-08-31 a 2026-11-17), retorno acumulado -0.17%, equity 99,834.38, posicao atual 0.2614
-AAPL__buyhold: 25 dias (2026-10-14 a 2026-11-17), retorno acumulado +1.07%, equity 101,067.19, posicao atual 1.0000
-AAPL__voltarget: 25 dias (2026-10-14 a 2026-11-17), retorno acumulado +1.11%, equity 101,107.17, posicao atual 0.7131
-AAPL__trendvol: 25 dias (2026-10-14 a 2026-11-17), retorno acumulado +1.11%, equity 101,107.17, posicao atual 0.7131
-AAPL: 52 dias (2026-08-31 a 2026-11-17), retorno acumulado +1.32%, equity 101,319.35, posicao atual 0.1613
-PETR4.SA__buyhold: 22 dias (2026-10-14 a 2026-11-16), retorno acumulado -24.22%, equity 75,776.37, posicao atual 1.0000
-PETR4.SA__voltarget: 22 dias (2026-10-14 a 2026-11-16), retorno acumulado -5.58%, equity 94,416.73, posicao atual 0.2133
-PETR4.SA__trendvol: 22 dias (2026-10-14 a 2026-11-16), retorno acumulado -5.58%, equity 94,416.73, posicao atual 0.2133
-PETR4.SA: 48 dias (2026-08-31 a 2026-11-16), retorno acumulado -0.34%, equity 99,659.65, posicao atual 0.1689
-VALE3.SA__buyhold: 22 dias (2026-10-14 a 2026-11-16), retorno acumulado -9.11%, equity 90,885.83, posicao atual 1.0000
-VALE3.SA__voltarget: 22 dias (2026-10-14 a 2026-11-16), retorno acumulado -3.98%, equity 96,024.36, posicao atual 0.2668
-VALE3.SA__trendvol: 22 dias (2026-10-14 a 2026-11-16), retorno acumulado -3.98%, equity 96,024.36, posicao atual 0.2668
-VALE3.SA: 48 dias (2026-08-31 a 2026-11-16), retorno acumulado -2.15%, equity 97,847.83, posicao atual 0.0737 -- AVISOS: 2 disparo(s) de stop-loss
+SPY__buyhold: 26 dias (2026-10-14 a 2026-11-18), retorno acumulado -0.87%, equity 99,133.62, posicao atual 1.0000
+SPY__voltarget: 26 dias (2026-10-14 a 2026-11-18), retorno acumulado -0.62%, equity 99,383.06, posicao atual 0.7763
+SPY__trendvol: 26 dias (2026-10-14 a 2026-11-18), retorno acumulado -0.62%, equity 99,383.06, posicao atual 0.7763
+SPY: 53 dias (2026-08-31 a 2026-11-18), retorno acumulado -0.25%, equity 99,754.37, posicao atual 0.2620
+AAPL__buyhold: 26 dias (2026-10-14 a 2026-11-18), retorno acumulado +1.22%, equity 101,222.27, posicao atual 1.0000
+AAPL__voltarget: 26 dias (2026-10-14 a 2026-11-18), retorno acumulado +1.22%, equity 101,217.34, posicao atual 0.7108
+AAPL__trendvol: 26 dias (2026-10-14 a 2026-11-18), retorno acumulado +1.22%, equity 101,217.34, posicao atual 0.7108
+AAPL: 53 dias (2026-08-31 a 2026-11-18), retorno acumulado +1.34%, equity 101,344.27, posicao atual 0.1605
+PETR4.SA__buyhold: 23 dias (2026-10-14 a 2026-11-18), retorno acumulado -25.69%, equity 74,313.17, posicao atual 1.0000
+PETR4.SA__voltarget: 23 dias (2026-10-14 a 2026-11-18), retorno acumulado -6.01%, equity 93,991.07, posicao atual 0.2325
+PETR4.SA__trendvol: 23 dias (2026-10-14 a 2026-11-18), retorno acumulado -6.01%, equity 93,991.07, posicao atual 0.2325
+PETR4.SA: 49 dias (2026-08-31 a 2026-11-18), retorno acumulado -0.66%, equity 99,341.49, posicao atual 0.1651
+VALE3.SA__buyhold: 23 dias (2026-10-14 a 2026-11-18), retorno acumulado -11.66%, equity 88,340.43, posicao atual 1.0000
+VALE3.SA__voltarget: 23 dias (2026-10-14 a 2026-11-18), retorno acumulado -4.64%, equity 95,356.15, posicao atual 0.2478
+VALE3.SA__trendvol: 23 dias (2026-10-14 a 2026-11-18), retorno acumulado -4.64%, equity 95,356.15, posicao atual 0.2478
+VALE3.SA: 49 dias (2026-08-31 a 2026-11-18), retorno acumulado -2.35%, equity 97,646.69, posicao atual 0.0734 -- AVISOS: 2 disparo(s) de stop-loss
